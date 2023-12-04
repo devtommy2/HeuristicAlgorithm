@@ -2,26 +2,22 @@ package org.sdutPmLab;
 
 import org.sdutPmLab.utils.LogReader;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
- * Hello world!
- *
+ * @author tommy
  */
 public class HeuristicMiner {
 
-    public static void main(String[] args) {
-//        String filePath = "";
-//        HashMap<String, Integer> traceAndFrequencyMap = LogReader.getTraceAndFrequencyMap(filePath);
-        String filePath = "src/main/java/org/sdutPmLab/data/running-example2.csv";
-        getAllActivitiesConnectedHeuristicMatrix(filePath);
-    }
-
-    public static void getAllActivitiesConnectedHeuristicMatrix(String logPath) {
+    public static HashMap<String, Double> getAllActivitiesConnectedHeuristicMatrix(String logPath,
+                                                                                   Double dependencyThreshold,
+                                                                                   Integer positiveObservationThreshold,
+                                                                                   Double relativeToBestThreshold) {
+        // {AED=9, ABCED=1, AD=1, AECBD=1, ACBD=1, ABCD=9}
         HashMap<String, Integer> traceAndFrequencyMap = LogReader.getTraceAndFrequencyMap(logPath);
 
-        // HashMap<String, Integer>(key: AE, value: 1)
+        // activity pair's structor of HashMap<String, Integer>(key: AE, value: 1)
+        // get activity-activity pair's frequency in hashmap to calc dependency value
         HashMap<String, Integer> tupleAndFrequencyMap = new HashMap<>();
         for (Map.Entry<String, Integer> stringIntegerEntry : traceAndFrequencyMap.entrySet()) {
             String key = stringIntegerEntry.getKey();
@@ -36,19 +32,102 @@ public class HeuristicMiner {
             }
         }
 
-//        for (Map.Entry<String, Integer> stringIntegerEntry : tupleAndFrequencyMap.entrySet()) {
-//            System.out.println(stringIntegerEntry.getKey() + ": " + stringIntegerEntry.getValue());
-//        }
+        // filter tupleAndFrequencyMap by positiveObservationThreshold
+//        filterLessThanPositiveObservationThreshold(tupleAndFrequencyMap, positiveObservationThreshold);
 
         // calc
+        Set<String> allActivitySet = LogReader.getAllActivityInLog(logPath);
+        HashMap<String, Double> activityPairDependencyValueMap = new HashMap<>();
+        for (String activityI : allActivitySet) {
+            for (String activityJ : allActivitySet) {
+                // calc activityI-activityJ's Dependency Value using formula was given
+                calcDependencyRelationValue(activityI, activityJ, activityPairDependencyValueMap, tupleAndFrequencyMap);
+            }
+        }
+
+        // filter less than dependency threshold
+        filterLessThanDependencyThreshold(activityPairDependencyValueMap, dependencyThreshold);
+
+        // filter tupleAndFrequencyMap by positiveObservationThreshold
+        filterLessThanPositiveObservationThreshold(activityPairDependencyValueMap, tupleAndFrequencyMap, positiveObservationThreshold);
+
+        // filter by relativeToBestThreshold
+        filterByRelativeToBestThreshold();
+
+        return activityPairDependencyValueMap;
+    }
+
+    public static void filterByRelativeToBestThreshold() {
+
+    }
+
+    /**
+     * remove AB: Dependency Which Frequency Less Than Threshold Was Given
+     * @param activityPairDependencyValueMap
+     * @param tupleAndFrequencyMap
+     * @param positiveObservationThreshold
+     */
+    public static void filterLessThanPositiveObservationThreshold(HashMap<String, Double> activityPairDependencyValueMap, HashMap<String, Integer> tupleAndFrequencyMap, Integer positiveObservationThreshold) {
+        Set<String> removeTuple = new HashSet<>();
         for (Map.Entry<String, Integer> stringIntegerEntry : tupleAndFrequencyMap.entrySet()) {
             String key = stringIntegerEntry.getKey();
             Integer value = stringIntegerEntry.getValue();
+            if (value < positiveObservationThreshold) {
+                removeTuple.add(key);
+            }
+        }
 
-
+        for (String tuple : removeTuple) {
+            activityPairDependencyValueMap.remove(tuple);
         }
     }
 
-    public static void calcDependencyRelationValue() {
+    public static void filterLessThanDependencyThreshold(HashMap<String, Double> activityPairDependencyValueMap,
+                                                         Double dependencyThreshold) {
+        Set<String> removeActivitySet = new HashSet<>();
+        for (Map.Entry<String, Double> stringDoubleEntry : activityPairDependencyValueMap.entrySet()) {
+            String key = stringDoubleEntry.getKey();
+            Double value = stringDoubleEntry.getValue();
+
+            if (value < dependencyThreshold) {
+                removeActivitySet.add(key);
+            }
+        }
+
+        for (String activity : removeActivitySet) {
+            activityPairDependencyValueMap.remove(activity);
+        }
+    }
+
+    public static void print(Object iterable) {
+        System.out.println("********************************************************");
+        if (iterable instanceof Map) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) iterable).entrySet()) {
+                System.out.println(entry.getKey() + ": " + entry.getValue());
+            }
+        } else if (iterable instanceof List) {
+            ((List<?>) iterable).forEach(System.out::println);
+        }
+        System.out.println("********************************************************");
+    }
+
+    public static void calcDependencyRelationValue(String activityI,
+                                                   String activityJ,
+                                                   HashMap<String, Double> activityPairDependencyValueMap,
+                                                   HashMap<String, Integer> tupleAndFrequencyMap) {
+        // formula
+        Integer ABFreq = 0;
+        Integer BAFreq = 0;
+        if (tupleAndFrequencyMap.containsKey(activityI + activityJ)) {
+            ABFreq = tupleAndFrequencyMap.get(activityI + activityJ);
+        }
+
+        if (tupleAndFrequencyMap.containsKey(activityJ + activityI)) {
+            BAFreq = tupleAndFrequencyMap.get(activityJ + activityI);
+        }
+
+        Double aArrowB = (ABFreq - BAFreq + 0.0d) / (ABFreq + BAFreq + 1.0d);
+
+        activityPairDependencyValueMap.put(activityI + activityJ, aArrowB);
     }
 }

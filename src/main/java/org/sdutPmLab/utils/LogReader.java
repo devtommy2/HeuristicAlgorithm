@@ -77,11 +77,22 @@ public class LogReader {
         return traceIntegerMap;
     }
 
-    public static void main(String[] args) {
-        HashMap<String, Integer> traceList = LogReader.getTraceAndFrequencyMap("src/main/java/org/sdutPmLab/data/running-example2.csv");
+    public static Set<String> getAllActivityInLog(String csvFilePath) {
+        List<Event> eventList = LogReader.getEventList(csvFilePath);
+        Set<String> allActivitySet = new HashSet<>();
 
-        for (Map.Entry<String, Integer> traceIntegerEntry : traceList.entrySet()) {
-            System.out.println("key: " + traceIntegerEntry.getKey() + " value: " + traceIntegerEntry.getValue());
+        assert eventList != null;
+        for (Event event : eventList) {
+            allActivitySet.add(event.getActivity());
         }
+        return allActivitySet;
     }
+
+//    public static void main(String[] args) {
+//        HashMap<String, Integer> traceList = LogReader.getTraceAndFrequencyMap("src/main/java/org/sdutPmLab/data/running-example2.csv");
+//
+//        for (Map.Entry<String, Integer> traceIntegerEntry : traceList.entrySet()) {
+//            System.out.println("key: " + traceIntegerEntry.getKey() + " value: " + traceIntegerEntry.getValue());
+//        }
+//    }
 }
