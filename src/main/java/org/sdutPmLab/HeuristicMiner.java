@@ -2,7 +2,6 @@ package org.sdutPmLab;
 
 import org.sdutPmLab.utils.LogReader;
 
-import java.text.DecimalFormat;
 import java.util.*;
 
 /**
@@ -10,6 +9,15 @@ import java.util.*;
  */
 public class HeuristicMiner {
 
+    /**
+     * result Format:
+     * BD: 0.9090909090909091
+     * ED: 0.9090909090909091
+     * AB: 0.9090909090909091
+     * CD: 0.9
+     * AC: 0.9
+     * AE: 0.9090909090909091
+     */
     public static HashMap<String, Double> getAllActivitiesConnectedHeuristicMatrix(String logPath,
                                                                                    Double dependencyThreshold,
                                                                                    Integer positiveObservationThreshold,
@@ -43,6 +51,31 @@ public class HeuristicMiner {
             }
         }
 
+        // calc single loop situation
+        Set<String> singleLoopActivitySet = new HashSet<>();
+        for (String activity : allActivitySet) {
+            calcSingleLoopDependencyValue(activity, activityPairDependencyValueMap, tupleAndFrequencyMap, singleLoopActivitySet, dependencyThreshold);
+        }
+
+        // calc double loop situation
+        for (Map.Entry<String, Integer> stringIntegerEntry : traceAndFrequencyMap.entrySet()) {
+            Integer traceFrequency = stringIntegerEntry.getValue();
+            String trace = stringIntegerEntry.getKey();
+
+//             保证满足双循环的情况下不是单循环！
+//            allActivitySet.stream().collect()
+            List<String> allActivityList = new ArrayList<>(allActivitySet);
+            for (int i = 0; i < allActivityList.size(); i ++ ) {
+                for (int j = 0; j < allActivityList.size(); j ++ ) {
+                    if (i != j && !singleLoopActivitySet.contains(allActivityList.get(i)) && !singleLoopActivitySet.contains(allActivityList.get(j))) {
+                        // todo
+                        String activityActivity = allActivityList.get(i) + allActivityList.get(j) + "2";
+                        calcDoubleLoopDependencyValue(activityActivity, trace, activityPairDependencyValueMap, tupleAndFrequencyMap);
+                    }
+                }
+            }
+        }
+
         // filter less than dependency threshold
         filterLessThanDependencyThreshold(activityPairDependencyValueMap, dependencyThreshold);
 
@@ -52,7 +85,47 @@ public class HeuristicMiner {
         // filter by relativeToBestThreshold
         filterByRelativeToBestThreshold(activityPairDependencyValueMap, relativeToBestThreshold);
 
+
         return activityPairDependencyValueMap;
+    }
+
+
+    public static void calcSingleLoopDependencyValue(String activity,
+                                                    HashMap<String, Double> activityPairDependencyValueMap,
+                                                    HashMap<String, Integer> tupleAndFrequencyMap,
+                                                     Set<String> singleLoopActivitySet,
+                                                     Double dependencyThreshold) {
+
+        Integer activityActivity = 0;
+        if (tupleAndFrequencyMap.containsKey(activity + activity)) {
+            activityActivity = tupleAndFrequencyMap.get(activity + activity);
+        }
+        // calc
+        Double calcActivityActivity = (activityActivity + 0.0) / (activityActivity + 1.0);
+        activityPairDependencyValueMap.put(activity + activity, calcActivityActivity);
+
+        if (calcActivityActivity > dependencyThreshold) {
+            singleLoopActivitySet.add(activity);
+        }
+    }
+
+    // calc the double loop num on every trace
+    // activity: AB2, CD2
+    public static void calcDoubleLoopDependencyValue(String activityActivity, String trace,
+                                                     HashMap<String, Double> activityPairDependencyValueMap,
+                                                     HashMap<String, Integer> tupleAndFrequencyMap) {
+        // pre data
+        Integer doubleLoopOccurNum = doubleLoopOccurNumOnTrace(activityActivity.replace("2", ""), trace); // |a>>b|
+        StringBuilder stringBuilder = new StringBuilder(activityActivity.replace("2", ""));
+        Integer doubleLoopOccurTraverseNum = doubleLoopOccurNumOnTrace(stringBuilder.reverse().toString(), trace); // |b>>a|
+
+        // calc
+        Double doubleLoopDependency = (doubleLoopOccurNum + doubleLoopOccurTraverseNum + 0.0) / (doubleLoopOccurNum + doubleLoopOccurTraverseNum + 1.0);
+        activityPairDependencyValueMap.put(activityActivity, doubleLoopDependency);
+    }
+
+    public static Integer doubleLoopOccurNumOnTrace(String activityActivity, String trace) {
+        return 0;
     }
 
     /**

@@ -44,7 +44,7 @@ public class HeuristicMinerTest extends TestCase {
     }
 
     public void testGetAllActivitiesConnectedHeuristicMatrix() {
-        HashMap<String, Double> allActivitiesConnectedHeuristicMatrix = HeuristicMiner.getAllActivitiesConnectedHeuristicMatrix(filePath, 0.1, 3, 0.0);
+        HashMap<String, Double> allActivitiesConnectedHeuristicMatrix = HeuristicMiner.getAllActivitiesConnectedHeuristicMatrix(filePath, 0.1, 1, 0.1);
 
         for (Map.Entry<String, Double> stringDoubleEntry : allActivitiesConnectedHeuristicMatrix.entrySet()) {
             String key = stringDoubleEntry.getKey();
