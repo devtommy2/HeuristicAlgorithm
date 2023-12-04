@@ -44,14 +44,14 @@ public class HeuristicMinerTest extends TestCase {
     }
 
     public void testGetAllActivitiesConnectedHeuristicMatrix() {
-        HashMap<String, Double> allActivitiesConnectedHeuristicMatrix = HeuristicMiner.getAllActivitiesConnectedHeuristicMatrix(filePath, 0.1, 3, 0.2);
+        HashMap<String, Double> allActivitiesConnectedHeuristicMatrix = HeuristicMiner.getAllActivitiesConnectedHeuristicMatrix(filePath, 0.1, 3, 0.0);
 
-//        for (Map.Entry<String, Double> stringDoubleEntry : allActivitiesConnectedHeuristicMatrix.entrySet()) {
-//            String key = stringDoubleEntry.getKey();
-//            Double value = stringDoubleEntry.getValue();
-//
-//            System.out.println(key + ": " + value);
-//        }
+        for (Map.Entry<String, Double> stringDoubleEntry : allActivitiesConnectedHeuristicMatrix.entrySet()) {
+            String key = stringDoubleEntry.getKey();
+            Double value = stringDoubleEntry.getValue();
+
+            System.out.println(key + ": " + value);
+        }
     }
 
     public void testtraceAndFrequencyMap() {
@@ -64,6 +64,25 @@ public class HeuristicMinerTest extends TestCase {
 
 //        System.out.println(a.contains("a"));
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 }

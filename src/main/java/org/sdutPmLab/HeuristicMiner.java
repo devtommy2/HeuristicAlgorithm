@@ -2,6 +2,7 @@ package org.sdutPmLab;
 
 import org.sdutPmLab.utils.LogReader;
 
+import java.text.DecimalFormat;
 import java.util.*;
 
 /**
@@ -32,9 +33,6 @@ public class HeuristicMiner {
             }
         }
 
-        // filter tupleAndFrequencyMap by positiveObservationThreshold
-//        filterLessThanPositiveObservationThreshold(tupleAndFrequencyMap, positiveObservationThreshold);
-
         // calc
         Set<String> allActivitySet = LogReader.getAllActivityInLog(logPath);
         HashMap<String, Double> activityPairDependencyValueMap = new HashMap<>();
@@ -52,20 +50,48 @@ public class HeuristicMiner {
         filterLessThanPositiveObservationThreshold(activityPairDependencyValueMap, tupleAndFrequencyMap, positiveObservationThreshold);
 
         // filter by relativeToBestThreshold
-        filterByRelativeToBestThreshold();
+        filterByRelativeToBestThreshold(activityPairDependencyValueMap, relativeToBestThreshold);
 
         return activityPairDependencyValueMap;
     }
 
-    public static void filterByRelativeToBestThreshold() {
+    /**
+     * filter the dependency relations by
+     */
+    public static void filterByRelativeToBestThreshold(HashMap<String, Double> activityPairDependencyValueMap, Double relativeToBestThreshold) {
 
+        /*
+          1. find the best Dependency Value
+          2. calc the diff between the best Dependency Value and Dependency Value
+          3. filter which diff value less than Threshold
+         */
+        // choose the best Dependency Value
+        Double bestDependencyValue = 0D;
+        for (Map.Entry<String, Double> stringDoubleEntry : activityPairDependencyValueMap.entrySet()) {
+            Double value = stringDoubleEntry.getValue();
+            if (value > bestDependencyValue) {
+                bestDependencyValue = value;
+            }
+        }
+
+        // calc the diff value and record remove item
+        Set<String> shouldRemoveTuple = new HashSet<>();
+        for (Map.Entry<String, Double> stringDoubleEntry : activityPairDependencyValueMap.entrySet()) {
+            String key = stringDoubleEntry.getKey();
+            double diff = bestDependencyValue - stringDoubleEntry.getValue();
+            if (diff > relativeToBestThreshold) {
+                shouldRemoveTuple.add(key);
+            }
+        }
+
+        // remove(filter)
+        for (String tuple : shouldRemoveTuple) {
+            activityPairDependencyValueMap.remove(tuple);
+        }
     }
 
     /**
      * remove AB: Dependency Which Frequency Less Than Threshold Was Given
-     * @param activityPairDependencyValueMap
-     * @param tupleAndFrequencyMap
-     * @param positiveObservationThreshold
      */
     public static void filterLessThanPositiveObservationThreshold(HashMap<String, Double> activityPairDependencyValueMap, HashMap<String, Integer> tupleAndFrequencyMap, Integer positiveObservationThreshold) {
         Set<String> removeTuple = new HashSet<>();
@@ -99,6 +125,11 @@ public class HeuristicMiner {
         }
     }
 
+    /**
+     * to print the object like HashMap or List
+     * just Using Test Program
+     * @param iterable
+     */
     public static void print(Object iterable) {
         System.out.println("********************************************************");
         if (iterable instanceof Map) {
